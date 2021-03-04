@@ -2,15 +2,17 @@
 pragma solidity ^0.8.1;
 
 contract Escrow {
-
+    // Enum to handle all possible states
     enum Status {OFFER, ORDER, COMPLETE, COMPLAIN}
     
+    // Struct to handle Order fields
     struct Order {
         address buyer;
         uint256 ordered;
         Status status;
     }
     
+    // Struct to handle Item fields
     struct Item {
         address seller;
         uint256 price;
@@ -18,8 +20,15 @@ contract Escrow {
         Order[] orders;
     }
 
+    // Mapping between item name and its data
     mapping(string => Item) public items;
     
+    /**
+     * @notice  Offer items for sale
+     * @param   _name The name of the item
+     * @param   _price The price of the item
+     * @param   _amount The amount of items to be sold
+     */
     function offer(string memory _name, uint256 _price, uint256 _amount) external {
         if (items[_name].seller == address(0)) {
             // Item does not exist
@@ -34,6 +43,14 @@ contract Escrow {
         }
     }
     
+    /**
+     * @notice  Order items offered by Sellers
+     *          The Buyer places a payment into escrow for that item amount
+     * @dev     Reverts if the item does not exist, amount is not available 
+     *          or the status is different than <OFFER>
+     * @param   _name The name of the item
+     * @param   _amount The amount of the item to be ordered
+     */
     function order(string memory _name, uint256 _amount) payable external {
         Item storage item = items[_name];
         require(item.seller != address(0), 'Item does not exist');
@@ -43,6 +60,13 @@ contract Escrow {
         item.amount -= _amount;
     }
     
+    /**
+     * @notice  Complete orders once they have received their purchase
+     *          The payment is paid from escrow to the Seller
+     * @dev     Reverts if the item does not exist, is not ordered by this buyer
+     *          or the status is different than <Offer>
+     * @param   _name The name of the item
+     */
     function complete(string memory _name) external {
         Item storage item = items[_name];
         bool found = false;
@@ -57,6 +81,13 @@ contract Escrow {
         if (!found) revert('Item not ordered or in different status than ORDER');
     }
     
+    /**
+     * @notice  Complain about orders if they never receive their purchase
+     *          The payment is refunded from escrow to the Buyer
+     * @dev     Reverts if the item is not ordered by this buyer
+     *          or the status is different than <Offer>
+     * @param   _name Tne name of the item
+     */
     function complain(string memory _name) external {
         Item storage item = items[_name];
         bool found = false;
@@ -71,6 +102,12 @@ contract Escrow {
         if (!found) revert('Item not ordered or in different status than ORDER');
     }
     
+    /**
+     * @notice  Get the order amount & status
+     * @param   _name Tne name of the item
+     * @return  _ordered The order amount
+     *          _status The order status
+     */
     function getOrder(string memory _name) external view returns (uint256 _ordered, Status _status) {
         for (uint256 i=0; i<items[_name].orders.length; i++) {
             if (items[_name].orders[i].buyer == msg.sender) {
@@ -80,14 +117,19 @@ contract Escrow {
         }
     }
     
+    /**
+     * @param   _buyer The User address to be checked
+     * @return  Total User's balance
+     */
     function getBuyerBalance(address _buyer) external view returns(uint256) {
         return address(_buyer).balance;
     }
     
+    /**
+     * @notice  Retrieve escrow balance
+     * @return  Total amount held in escrow
+     */
     function getContractBalance() external view returns(uint256) {
         return address(this).balance;
     }
-
-
-    
 }
