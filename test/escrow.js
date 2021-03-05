@@ -60,21 +60,21 @@ contract('Escrow', accounts => {
         assert(item.amount.toNumber() === 8, 'remaining amount does not match');
     });
 
-    it.only('should not create an order - item does not exist', async() => {
+    it('should not create an order - item does not exist', async() => {
         await expectRevert(
             escrow.order('pineapple', 2, {from: buyer1, value: 4}),
             'Item does not exist'
         );
     });
 
-    it.only('should not create an order - amount not available', async() => {
+    it('should not create an order - amount not available', async() => {
         await expectRevert(
             escrow.order('apple', 15, {from: buyer1, value: 4}),
             'Amount not available'
         );
     });
 
-    it.only('should not create an order - wrong price', async() => {
+    it('should not create an order - wrong price', async() => {
         await expectRevert(
             escrow.order('apple', 2, {from: buyer1, value: 1}),
             'Price sent is not equal to product price'
@@ -83,6 +83,32 @@ contract('Escrow', accounts => {
 
     /************************* C O M P L E T E ************************* */
 
+    it.only('should complete an order', async() => {
+        await escrow.order('apple', 2, {from: buyer1, value: 4});
+        await escrow.complete('apple', {from: buyer1});
+
+        const res = await escrow.getOrder('apple', {from: buyer1});
+        const {0: ordered, 1: status} = res;
+
+        assert(ordered.toNumber() === 2, 'ordered amount does not match');
+        assert(status.toNumber() === STATUS.Complete, 'status does not match');
+    });
+
+    it.only('should not complete an order - item not ordered', async() => {
+        await expectRevert(
+            escrow.complete('banana', {from: buyer1}),
+            'Item not ordered or in different status than ORDER'
+        );
+    });
+
+    it.only('should not complete an order - status is different than <ORDER>', async() => {
+        await expectRevert(
+            escrow.complete('apple', {from: buyer1}),
+            'Item not ordered or in different status than ORDER'
+        );
+    });
+
+    //TODO: check eth transfer from contract to seller
 
     /************************* C O M P L A I N ************************* */
 
