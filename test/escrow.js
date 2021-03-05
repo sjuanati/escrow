@@ -47,6 +47,39 @@ contract('Escrow', accounts => {
 
     /**************************** O R D E R **************************** */
 
+    it('should create an order', async() => {
+        await escrow.order('apple', 2, {from: buyer1, value: 4});
+        const res = await escrow.getOrder('apple', {from: buyer1});
+        const {0: ordered, 1: status} = res;
+
+        assert(ordered.toNumber() === 2, 'ordered amount does not match');
+        assert(status.toNumber() === STATUS.Order, 'status does not match');
+
+        let item = await escrow.items.call('apple');
+
+        assert(item.amount.toNumber() === 8, 'remaining amount does not match');
+    });
+
+    it.only('should not create an order - item does not exist', async() => {
+        await expectRevert(
+            escrow.order('pineapple', 2, {from: buyer1, value: 4}),
+            'Item does not exist'
+        );
+    });
+
+    it.only('should not create an order - amount not available', async() => {
+        await expectRevert(
+            escrow.order('apple', 15, {from: buyer1, value: 4}),
+            'Amount not available'
+        );
+    });
+
+    it.only('should not create an order - wrong price', async() => {
+        await expectRevert(
+            escrow.order('apple', 2, {from: buyer1, value: 1}),
+            'Price sent is not equal to product price'
+        );
+    });
 
     /************************* C O M P L E T E ************************* */
 
