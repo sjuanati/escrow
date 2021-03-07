@@ -34,7 +34,10 @@ contract Escrow {
         uint256 _price,
         uint256 _amount
     ) external {
-        require(_amount > 0 && _price > 0, 'amount & price must be higher than 0');
+        require(
+            _amount > 0 && _price > 0,
+            "amount & price must be higher than 0"
+        );
         if (items[_name].seller == address(0)) {
             // Item does not exist
             items[_name].seller = msg.sender;
